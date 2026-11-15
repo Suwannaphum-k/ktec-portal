@@ -80,7 +80,26 @@
     const { data } = await sb.from("settings").select("*"); const s = {};
     (data || []).forEach(r => s[r.key] = r.value);
     if (s.announcement) { const a = mk("div", { className: "tip", textContent: s.announcement }); a.style.marginBottom = "16px"; document.querySelector("main").prepend(a); }
+    if (s.ssid) CONFIG.ssid = s.ssid;
+    if (s.ota) CONFIG.ota = s.ota;
+    if (s.email) {
+      const first = !CONFIG.email; CONFIG.email = s.email;
+      if (first) { const m = $("#mail"); m.hidden = false; m.onclick = e => { e.preventDefault();
+        location.href = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent(t("mail_subject") + " " + devId) + "&body=" + encodeURIComponent($("#msg").value + info()); }; }
+    }
     if (s.contact) $("#footMail").textContent = " · " + s.contact;
+    applyLang();
+  }
+  async function loadDtc() {                                // รหัส DTC ที่เจ้าของเพิ่ม/แก้/ซ่อน ทับของเดิมในเว็บ
+    const { data } = await sb.from("dtc_codes").select("*");
+    if (!data || !data.length) return;
+    data.forEach(r => {
+      const i = DTC.findIndex(x => x[0] === r.code);
+      if (r.hidden) { if (i >= 0) DTC.splice(i, 1); return; }
+      const row = [r.code, r.th, r.en || r.th];
+      if (i >= 0) DTC[i] = row; else DTC.push(row);
+    });
+    DTC.sort((a, b) => a[0] < b[0] ? -1 : 1); renderDtc();
   }
 
   const oldApply = applyLang;
@@ -88,5 +107,5 @@
   applyLang();
 
   if (devId !== "-") sb.rpc("ping_device", { dev: devId, v: curFw });
-  loadFw(); loadSettings(); loadMine();
+  loadFw(); loadSettings(); loadDtc(); loadMine();
 })();

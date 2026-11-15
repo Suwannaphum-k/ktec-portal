@@ -29,6 +29,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px so
 <button class="tab on" data-t="reports">แจ้งปัญหา <span id="nb" class="badge new" hidden></span></button>
 <button class="tab" data-t="fw">เฟิร์มแวร์</button>
 <button class="tab" data-t="dev">เครื่องลูกค้า</button>
+<button class="tab" data-t="dtc">รหัส DTC</button>
 <button class="tab" data-t="set">ตั้งค่าเว็บลูกค้า</button>
 <button onclick="logout()">ออก</button></header>
 <main>
@@ -42,9 +43,16 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px so
 
 <section id="t-dev" hidden><div class="card wrap" id="dl"></div></section>
 
+<section id="t-dtc" hidden><div class="card"><b>เพิ่ม / แก้ไขรหัส DTC</b> <small>(รหัสที่ซ้ำกับของเดิมในเว็บ = เขียนทับ, ลบแล้วกลับไปใช้ของเดิม)</small>
+<input id="dc" placeholder="รหัส เช่น P0107"><input id="dth" placeholder="คำอธิบายภาษาไทย"><input id="den" placeholder="English (ไม่ใส่ = ใช้ภาษาไทย)">
+<label><input id="dh" type="checkbox" style="width:auto"> ซ่อนรหัสนี้จากลูกค้า</label><br><button class="g" onclick="saveDtc()">บันทึก</button></div><div id="dll"></div></section>
+
 <section id="t-set" hidden><div class="card"><b>ประกาศบนเว็บลูกค้า</b>
 <textarea id="s-announcement" placeholder="เว้นว่าง = ไม่แสดงประกาศ"></textarea>
 <b>ช่องทางติดต่อ (LINE / เบอร์)</b><input id="s-contact">
+<b>อีเมลรับแจ้งปัญหา (ไม่บังคับ)</b><input id="s-email">
+<b>ชื่อ WiFi ของเกจ</b><input id="s-ssid" placeholder="KTEC-GAUGE">
+<b>ที่อยู่หน้าอัปโหลดในเกจ</b><input id="s-ota" placeholder="192.168.4.1/ota">
 <button class="g" onclick="saveSet()">บันทึก</button></div></section>
 </main></div><div id="msg"></div>
 
@@ -60,9 +68,9 @@ async function login(){const{error}=await sb.auth.signInWithPassword({email:$("e
  if(error){$("le").textContent="เข้าไม่ได้";return}start()}
 async function logout(){await sb.auth.signOut();location.reload()}
 async function start(){const{data}=await sb.auth.getSession();if(!data.session)return;
- $("login").hidden=true;$("app").hidden=false;loadReports();loadFw();loadDev();loadSet()}
+ $("login").hidden=true;$("app").hidden=false;loadReports();loadFw();loadDev();loadDtc();loadSet()}
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
- ["reports","fw","dev","set"].forEach(t=>$("t-"+t).hidden=t!==b.dataset.t)});
+ ["reports","fw","dev","dtc","set"].forEach(t=>$("t-"+t).hidden=t!==b.dataset.t)});
 
 async function loadReports(){let q=sb.from("reports").select("*").order("created_at",{ascending:false}).limit(200);
  if($("rf").value)q=q.eq("status",$("rf").value);const{data,error}=await q;if(error)return toast(error.message);
@@ -92,8 +100,18 @@ async function delFw(id,p){if(!confirm("ลบเฟิร์มแวร์น�
 async function loadDev(){const{data,error}=await sb.from("devices").select("*").order("last_seen",{ascending:false});if(error)return toast(error.message);
  $("dl").innerHTML=`<table><tr><th>รหัสเครื่อง</th><th>FW</th><th>เปิดเว็บล่าสุด</th></tr>${data.map(d=>`<tr><td>${esc(d.device_id)}</td><td>${esc(d.fw)}</td><td>${fmt(d.last_seen)}</td></tr>`).join("")}</table>`}
 
+let DT=[];
+async function loadDtc(){const{data,error}=await sb.from("dtc_codes").select("*").order("code");if(error)return toast(error.message);DT=data;
+ $("dll").innerHTML=data.map((r,i)=>`<div class="card"><div class="row"><b>${esc(r.code)}</b>${r.hidden?'<span class="badge prog">ซ่อน</span>':""}<span>${esc(r.th)}</span><small>${esc(r.en)}</small><button onclick="editDtc(${i})">แก้ไข</button><button class="d" onclick="delDtc(${i})">ลบ</button></div></div>`).join("")||'<p class="mu">ยังไม่มีรหัสที่เพิ่มเอง (รหัสเดิมในเว็บใช้ต่อได้)</p>'}
+function editDtc(i){const r=DT[i];$("dc").value=r.code;$("dth").value=r.th;$("den").value=r.en||"";$("dh").checked=!!r.hidden;scrollTo(0,0)}
+async function saveDtc(){const code=$("dc").value.trim().toUpperCase(),th=$("dth").value.trim();
+ if(!/^[PCBU][0-9A-F]{4}$/.test(code)||!th)return toast("รหัสต้องเป็นรูปแบบ P0107 และใส่คำอธิบายภาษาไทย");
+ const{error}=await sb.from("dtc_codes").upsert({code,th,en:$("den").value.trim(),hidden:$("dh").checked});toast(error?error.message:"บันทึกแล้ว");
+ if(!error){$("dc").value=$("dth").value=$("den").value="";$("dh").checked=false}loadDtc()}
+async function delDtc(i){if(!confirm("ลบรหัสนี้?"))return;await sb.from("dtc_codes").delete().eq("code",DT[i].code);loadDtc()}
+setInterval(async()=>{if($("app").hidden)return;const{count}=await sb.from("reports").select("id",{count:"exact",head:true}).eq("status","new");$("nb").hidden=!count||!!$("rf").value;$("nb").textContent=count},30000);
 async function loadSet(){const{data}=await sb.from("settings").select("*");(data||[]).forEach(s=>{const e=$("s-"+s.key);if(e)e.value=s.value})}
-async function saveSet(){const rows=["announcement","contact"].map(k=>({key:k,value:$("s-"+k).value}));
+async function saveSet(){const rows=["announcement","contact","email","ssid","ota"].map(k=>({key:k,value:$("s-"+k).value}));
  const{error}=await sb.from("settings").upsert(rows);toast(error?error.message:"บันทึกแล้ว")}
 start();
 </script></body></html>
