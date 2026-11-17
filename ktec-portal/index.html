@@ -1,94 +1,31 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KTEC GAUGE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KTEC</title>
 <style>
-/* ===== แก้ 3 ค่านี้ใน script ด้านล่างเมื่อมีเฟิร์มแวร์ใหม่ ===== */
-:root{--bg:#050a14;--panel:#0b1428;--line:#1c2d52;--blue:#2a7fff;--cyan:#00e5ff;--text:#e8eefc;--muted:#8393b8;--ok:#28ff3c;--warn:#ffd21e}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:17px/1.6 "Sarabun","Noto Sans Thai",Tahoma,sans-serif}
-main{max-width:640px;margin:0 auto;padding:24px 16px 48px}
-h1{margin:0;font-size:28px;font-style:italic;letter-spacing:.5px}
-h1 span{color:var(--blue)}
-.sub{color:var(--muted);margin:2px 0 22px}
-section{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:10px;padding:16px 18px;margin:0 0 16px}
-section:target{border-left-color:var(--cyan)}
-h2{margin:0 0 8px;font-size:19px}
-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
-dt{color:var(--muted)}dd{margin:0;font-weight:700}
-.st{margin:12px 0 0;font-weight:700}
-.ok{color:var(--ok)}.warn{color:var(--warn)}
-ol{margin:8px 0 0;padding-left:22px}
-a.btn,button{display:inline-block;margin:12px 8px 0 0;padding:10px 18px;font:inherit;color:#fff;background:#081226;border:1px solid var(--blue);border-radius:8px;text-decoration:none;cursor:pointer}
-a.btn:hover,button:hover{background:var(--blue)}
-textarea,input{width:100%;margin-top:8px;padding:10px;font:inherit;color:#fff;background:#050a14;border:1px solid var(--line);border-radius:8px}
-textarea{min-height:110px}
-a:focus-visible,button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-small{color:var(--muted)}
+body{margin:0;background:#050d1a;color:#e8f1fb;font:16px/1.6 "Noto Sans Thai","Segoe UI",sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
+.c{max-width:420px;width:100%;padding:24px}
+h1{color:#16e0f5;letter-spacing:2px;margin:0 0 16px}
+a{display:block;padding:14px 16px;margin-bottom:10px;border:1px solid #16345a;border-radius:12px;background:#0b1830;color:#e8f1fb;text-decoration:none}
+a:hover{border-color:#16e0f5}
+p{color:#8aa4c4}
 </style>
 </head>
 <body>
-<main>
-<h1>KTEC <span>GAUGE</span></h1>
-<p class="sub">อัปเดตเฟิร์มแวร์และแจ้งปัญหา</p>
-
-<section id="fw">
-  <h2>เฟิร์มแวร์</h2>
-  <dl>
-    <dt>รหัสเครื่อง</dt><dd id="id">-</dd>
-    <dt>เวอร์ชันในเครื่อง</dt><dd id="cur">-</dd>
-    <dt>เวอร์ชันล่าสุด</dt><dd id="new">-</dd>
-  </dl>
-  <p class="st" id="st"></p>
-  <a class="btn" id="dl" href="#">ดาวน์โหลดไฟล์ .bin</a>
-  <ol>
-    <li>ดาวน์โหลดไฟล์ .bin ลงมือถือ</li>
-    <li>ต่อ WiFi ชื่อ KTEC-GAUGE</li>
-    <li>เปิด <b>192.168.4.1/ota</b> เลือกไฟล์ แล้วกดอัปโหลด</li>
-    <li>รอเกจรีสตาร์ตเอง</li>
-  </ol>
-</section>
-
-<section id="report">
-  <h2>แจ้งปัญหา</h2>
-  <label for="msg">เกิดอะไรขึ้น</label>
-  <textarea id="msg" placeholder="เช่น หน้าจอดับตอนต่อ ECU"></textarea>
-  <a class="btn" id="mail" href="#">ส่งทางอีเมล</a>
-  <a class="btn" id="gh" href="#">ส่งทาง GitHub</a><br>
-  <small>ระบบแนบรหัสเครื่องและเวอร์ชันไปให้อัตโนมัติ</small>
-</section>
-</main>
-
+<div class="c">
+<h1>KTEC</h1>
+<p id="m">กำลังเปิดหน้าหลัก...</p>
+<a href="ktec-portal/">หน้าหลัก KTEC (โฟลเดอร์ ktec-portal)</a>
+<a href="ktec-dtc-motorcycle.html">ค้นรหัส DTC มอเตอร์ไซค์ฮอนด้า</a>
+<a href="owner.html">owner.html</a>
+</div>
 <script>
-/* ===== ค่าที่เจ้าของเว็บแก้เอง ===== */
-const LATEST_FW = "2.0.0";                 // เวอร์ชันล่าสุด (ให้ตรงกับ FW_VERSION ในโค้ดเกจ)
-const FW_FILE   = "firmware/ktec-gauge.bin"; // ที่อยู่ไฟล์ .bin ใน repo
-const EMAIL     = "";                      // อีเมลรับแจ้งปัญหา (เว้นว่างได้ จะซ่อนปุ่มอีเมล)
-/* ================================== */
-
-const q = new URLSearchParams(location.search);
-const id = q.get("id") || "-", fw = q.get("fw") || "-", page = q.get("page");
-const $ = i => document.getElementById(i);
-$("id").textContent = id; $("cur").textContent = fw; $("new").textContent = LATEST_FW;
-$("dl").href = FW_FILE;
-
-const st = $("st");
-if (fw === "-") { st.textContent = "เปิดจากปุ่ม UPDATE ในเกจเพื่อดูเวอร์ชันของคุณ"; }
-else if (fw === LATEST_FW) { st.textContent = "เฟิร์มแวร์เป็นเวอร์ชันล่าสุดแล้ว"; st.className = "st ok"; }
-else { st.textContent = "มีเวอร์ชันใหม่ อัปเดตได้เลย"; st.className = "st warn"; }
-
-const info = () => "\n\nรหัสเครื่อง: " + id + "\nเวอร์ชัน: " + fw;
-if (EMAIL) {
-  $("mail").onclick = e => { e.preventDefault(); location.href = "mailto:" + EMAIL + "?subject=" + encodeURIComponent("KTEC GAUGE " + id) + "&body=" + encodeURIComponent($("msg").value + info()); };
-} else { $("mail").hidden = true; }
-
-/* ปุ่ม GitHub หาชื่อบัญชีและ repo จากลิงก์เว็บนี้เอง */
-const user = location.hostname.split(".")[0], repo = location.pathname.split("/")[1] || "";
-$("gh").onclick = e => { e.preventDefault(); if (!repo) return; window.open("https://github.com/" + user + "/" + repo + "/issues/new?title=" + encodeURIComponent("แจ้งปัญหา " + id) + "&body=" + encodeURIComponent($("msg").value + info()), "_blank"); };
-
-if (page === "report") location.hash = "report";
+fetch("ktec-portal/index.html",{method:"HEAD"}).then(function(r){
+  if(r.ok){location.replace("ktec-portal/")}
+  else{document.getElementById("m").textContent="เลือกหน้าที่ต้องการ"}
+}).catch(function(){document.getElementById("m").textContent="เลือกหน้าที่ต้องการ"});
 </script>
 </body>
 </html>
