@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>KTEC OWNER</title>
+<style>
+:root{--bg:#0b1020;--card:#111a33;--line:#2a7fff55;--ac:#2a7fff;--tx:#dbe8ff;--mu:#78a8ff;--ok:#3ddc84;--wn:#ffd21e;--er:#ff5c5c}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 Tahoma,sans-serif;background:var(--bg);color:var(--tx)}
+header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+header b{font-size:18px;margin-right:auto}
+.tab,button{font:inherit;padding:.5em .9em;border:1px solid var(--ac);border-radius:8px;background:#081226;color:#fff;cursor:pointer}
+.tab.on{background:var(--ac)}button.d{border-color:var(--er);color:var(--er)}button.g{border-color:var(--ok);color:var(--ok)}
+main{max-width:900px;margin:auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 10px}
+input,select,textarea{width:100%;font:inherit;padding:.6em;border-radius:8px;border:1px solid var(--ac);background:#050a14;color:#fff;margin:.2em 0 .5em}
+textarea{min-height:70px}small,.mu{color:var(--mu)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;padding:.05em .6em;border-radius:99px;font-size:12px;border:1px solid}
+.new{color:var(--er)}.prog{color:var(--wn)}.done{color:var(--ok)}
+table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px solid var(--line);text-align:left}
+.wrap{overflow-x:auto}#msg{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#000;border:1px solid var(--ac);padding:.6em 1.2em;border-radius:8px;display:none;z-index:9}
+</style></head><body>
+<div id="login" class="card" style="max-width:380px;margin:12vh auto"><h3>KTEC OWNER</h3>
+<input id="em" type="email" placeholder="อีเมลเจ้าของ" autocomplete="username">
+<input id="pw" type="password" placeholder="รหัสผ่าน" autocomplete="current-password">
+<button onclick="login()">เข้าสู่ระบบ</button> <small id="le" class="new"></small></div>
+
+<div id="app" hidden>
+<header><b>KTEC OWNER</b>
+<button class="tab on" data-t="reports">แจ้งปัญหา <span id="nb" class="badge new" hidden></span></button>
+<button class="tab" data-t="fw">เฟิร์มแวร์</button>
+<button class="tab" data-t="dev">เครื่องลูกค้า</button>
+<button class="tab" data-t="dtc">รหัส DTC</button>
+<button class="tab" data-t="set">ตั้งค่าเว็บลูกค้า</button>
+<button onclick="logout()">ออก</button></header>
+<main>
+<section id="t-reports"><div class="row"><select id="rf" onchange="loadReports()" style="width:auto"><option value="">ทั้งหมด</option><option value="new">ใหม่</option><option value="prog">กำลังดูแล</option><option value="done">เสร็จแล้ว</option></select><button onclick="loadReports()">รีเฟรช</button></div><div id="rl"></div></section>
+
+<section id="t-fw" hidden><div class="card"><b>เพิ่มเฟิร์มแวร์ใหม่</b>
+<input id="fv" placeholder="เวอร์ชัน เช่น 2.0.1 (ให้ตรงกับ FW_VERSION ในโค้ด)">
+<textarea id="fn" placeholder="รายละเอียดการเปลี่ยนแปลง (ลูกค้าเห็น)"></textarea>
+<input id="ff" type="file" accept=".bin">
+<button class="g" onclick="addFw()">อัปโหลด</button> <small>ขึ้นเป็น "ซ่อน" ก่อน กดเผยแพร่เมื่อพร้อม</small></div><div id="fl"></div></section>
+
+<section id="t-dev" hidden><div class="card wrap" id="dl"></div><div id="ml"></div></section>
+
+<section id="t-dtc" hidden><div class="card"><b>เพิ่ม / แก้ไขรหัส DTC</b> <small>(รหัสที่ซ้ำกับของเดิมในเว็บ = เขียนทับ, ลบแล้วกลับไปใช้ของเดิม)</small>
+<input id="dc" placeholder="รหัส เช่น P0107"><input id="dth" placeholder="คำอธิบายภาษาไทย"><input id="den" placeholder="English (ไม่ใส่ = ใช้ภาษาไทย)">
+<label><input id="dh" type="checkbox" style="width:auto"> ซ่อนรหัสนี้จากลูกค้า</label><br><button class="g" onclick="saveDtc()">บันทึก</button></div><div id="dll"></div></section>
+
+<section id="t-set" hidden><div class="card"><b>ประกาศบนเว็บลูกค้า</b>
+<textarea id="s-announcement" placeholder="เว้นว่าง = ไม่แสดงประกาศ"></textarea>
+<b>ช่องทางติดต่อ (LINE / เบอร์)</b><input id="s-contact">
+<b>อีเมลรับแจ้งปัญหา (ไม่บังคับ)</b><input id="s-email">
+<b>ชื่อ WiFi ของเกจ</b><input id="s-ssid" placeholder="KTEC-GAUGE">
+<b>ที่อยู่หน้าอัปโหลดในเกจ</b><input id="s-ota" placeholder="192.168.4.1/ota">
+<button class="g" onclick="saveSet()">บันทึก</button></div></section>
+</main></div><div id="msg"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ===== แก้ 2 ค่านี้ (Supabase > Project Settings > API) ใช้ anon key เท่านั้น ห้ามใส่ service_role =====
+const SUPABASE_URL="https://jtrewmckqeetpybocpsu.supabase.co", SUPABASE_KEY="sb_publishable_e_l3eaYgsoE6hgPrq_pVrg_OFfFkpSy";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY),$=i=>document.getElementById(i);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ST={new:"ใหม่",prog:"กำลังดูแล",done:"เสร็จแล้ว"},fmt=t=>new Date(t).toLocaleString("th-TH");
+function toast(t){const m=$("msg");m.textContent=t;m.style.display="block";setTimeout(()=>m.style.display="none",2500)}
+async function login(){const{error}=await sb.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
+ if(error){$("le").textContent="เข้าไม่ได้";return}start()}
+async function logout(){await sb.auth.signOut();location.reload()}
+async function start(){const{data}=await sb.auth.getSession();if(!data.session)return;
+ $("login").hidden=true;$("app").hidden=false;loadReports();loadFw();loadDev();loadMsgs();loadDtc();loadSet()}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+ ["reports","fw","dev","dtc","set"].forEach(t=>$("t-"+t).hidden=t!==b.dataset.t)});
+
+async function loadReports(){let q=sb.from("reports").select("*").order("created_at",{ascending:false}).limit(200);
+ if($("rf").value)q=q.eq("status",$("rf").value);const{data,error}=await q;if(error)return toast(error.message);
+ const n=data.filter(r=>r.status==="new").length;$("nb").hidden=!n||!!$("rf").value;$("nb").textContent=n;
+ $("rl").innerHTML=data.map(r=>`<div class="card"><div class="row"><b>${esc(r.device_id||"-")}</b><small>FW ${esc(r.fw||"-")} · ${fmt(r.created_at)}</small>
+ <span class="badge ${esc(r.status)}">${ST[r.status]||esc(r.status)}</span></div>
+ <p>${esc(r.message).replace(/\n/g,"<br>")}</p><small>${esc(r.name||"")} ${esc(r.contact||"")}</small>
+ <textarea id="rp${r.id}" placeholder="ตอบลูกค้า (ลูกค้าเห็นในหน้าเว็บ)">${esc(r.reply||"")}</textarea>
+ <div class="row"><select id="rs${r.id}" style="width:auto">${Object.entries(ST).map(([k,v])=>`<option value="${k}"${k===r.status?" selected":""}>${v}</option>`).join("")}</select>
+ <button class="g" onclick="saveRep(${r.id})">บันทึก</button><button class="d" onclick="delRep(${r.id})">ลบ</button></div></div>`).join("")||'<p class="mu">ยังไม่มีรายการ</p>'}
+async function saveRep(id){const{error}=await sb.from("reports").update({status:$("rs"+id).value,reply:$("rp"+id).value}).eq("id",id);toast(error?error.message:"บันทึกแล้ว");loadReports()}
+async function delRep(id){if(!confirm("ลบรายการนี้?"))return;await sb.from("reports").delete().eq("id",id);loadReports()}
+
+async function loadFw(){const{data,error}=await sb.from("firmware").select("*").order("created_at",{ascending:false});if(error)return toast(error.message);
+ $("fl").innerHTML=data.map(f=>`<div class="card"><div class="row"><b>v${esc(f.version)}</b><span class="badge ${f.published?"done":"prog"}">${f.published?"เผยแพร่แล้ว":"ซ่อนอยู่"}</span>
+ <small>${(f.size/1024).toFixed(0)} KB · ${fmt(f.created_at)}</small></div><p>${esc(f.notes).replace(/\n/g,"<br>")}</p>
+ <div class="row"><button onclick="pubFw(${f.id},${!f.published})">${f.published?"ซ่อน":"เผยแพร่"}</button>
+ <a href="${sb.storage.from("firmware").getPublicUrl(f.file_path).data.publicUrl}" style="color:var(--mu)">ดาวน์โหลด</a>
+ <button class="d" onclick="delFw(${f.id},'${esc(f.file_path)}')">ลบ</button></div></div>`).join("")||'<p class="mu">ยังไม่มีเฟิร์มแวร์</p>'}
+async function addFw(){const v=$("fv").value.trim(),f=$("ff").files[0];if(!/^[0-9A-Za-z._-]+$/.test(v)||!f)return toast("ใส่เวอร์ชัน (ตัวอักษร/ตัวเลข) และเลือกไฟล์ .bin");
+ const p=`v${v}.bin`,u=await sb.storage.from("firmware").upload(p,f,{upsert:true,contentType:"application/octet-stream"});if(u.error)return toast(u.error.message);
+ const{error}=await sb.from("firmware").insert({version:v,notes:$("fn").value,file_path:p,size:f.size,published:false});
+ toast(error?error.message:"อัปโหลดแล้ว");$("fv").value=$("fn").value=$("ff").value="";loadFw()}
+async function pubFw(id,on){await sb.from("firmware").update({published:on}).eq("id",id);loadFw()}
+async function delFw(id,p){if(!confirm("ลบเฟิร์มแวร์นี้?"))return;await sb.storage.from("firmware").remove([p]);await sb.from("firmware").delete().eq("id",id);loadFw()}
+
+let DV=[];
+async function loadDev(){const{data,error}=await sb.from("devices").select("*").order("last_seen",{ascending:false});if(error)return toast(error.message);DV=data;
+ $("dl").innerHTML=`<table><tr><th>รหัสเครื่อง</th><th>FW</th><th>เปิดเว็บล่าสุด</th><th>ส่งข้อความถึงเครื่องนี้</th></tr>${data.map((d,i)=>`<tr><td>${esc(d.device_id)}</td><td>${esc(d.fw)}</td><td>${fmt(d.last_seen)}</td><td><div class="row"><input id="dm${i}" maxlength="1000" placeholder="ข้อความ (ลูกค้าเห็นเมื่อเปิดเว็บ)" style="min-width:180px"><button class="g" onclick="sendMsg(${i})">ส่ง</button></div></td></tr>`).join("")}</table>`}
+async function sendMsg(i){const m=$("dm"+i).value.trim();if(!m)return;const{error}=await sb.from("device_messages").insert({device_id:DV[i].device_id,message:m});toast(error?error.message:"ส่งแล้ว");if(!error){$("dm"+i).value="";loadMsgs()}}
+async function loadMsgs(){const{data,error}=await sb.from("device_messages").select("*").order("created_at",{ascending:false}).limit(50);if(error)return;
+ $("ml").innerHTML=data.length?`<b>ข้อความที่ส่งแล้ว</b>`+data.map(m=>`<div class="card"><div class="row"><b>${esc(m.device_id)}</b><small>${fmt(m.created_at)}</small><button class="d" onclick="delMsg(${Number(m.id)})">ลบ</button></div><p>${esc(m.message).replace(/\n/g,"<br>")}</p></div>`).join(""):""}
+async function delMsg(id){if(!confirm("ลบข้อความนี้?"))return;await sb.from("device_messages").delete().eq("id",id);loadMsgs()}
+
+let DT=[];
+async function loadDtc(){const{data,error}=await sb.from("dtc_codes").select("*").order("code");if(error)return toast(error.message);DT=data;
+ $("dll").innerHTML=data.map((r,i)=>`<div class="card"><div class="row"><b>${esc(r.code)}</b>${r.hidden?'<span class="badge prog">ซ่อน</span>':""}<span>${esc(r.th)}</span><small>${esc(r.en)}</small><button onclick="editDtc(${i})">แก้ไข</button><button class="d" onclick="delDtc(${i})">ลบ</button></div></div>`).join("")||'<p class="mu">ยังไม่มีรหัสที่เพิ่มเอง (รหัสเดิมในเว็บใช้ต่อได้)</p>'}
+function editDtc(i){const r=DT[i];$("dc").value=r.code;$("dth").value=r.th;$("den").value=r.en||"";$("dh").checked=!!r.hidden;scrollTo(0,0)}
+async function saveDtc(){const code=$("dc").value.trim().toUpperCase(),th=$("dth").value.trim();
+ if(!/^[PCBU][0-9A-F]{4}$/.test(code)||!th)return toast("รหัสต้องเป็นรูปแบบ P0107 และใส่คำอธิบายภาษาไทย");
+ const{error}=await sb.from("dtc_codes").upsert({code,th,en:$("den").value.trim(),hidden:$("dh").checked});toast(error?error.message:"บันทึกแล้ว");
+ if(!error){$("dc").value=$("dth").value=$("den").value="";$("dh").checked=false}loadDtc()}
+async function delDtc(i){if(!confirm("ลบรหัสนี้?"))return;await sb.from("dtc_codes").delete().eq("code",DT[i].code);loadDtc()}
+setInterval(async()=>{if($("app").hidden)return;const{count}=await sb.from("reports").select("id",{count:"exact",head:true}).eq("status","new");$("nb").hidden=!count||!!$("rf").value;$("nb").textContent=count},30000);
+async function loadSet(){const{data}=await sb.from("settings").select("*");(data||[]).forEach(s=>{const e=$("s-"+s.key);if(e)e.value=s.value})}
+async function saveSet(){const rows=["announcement","contact","email","ssid","ota"].map(k=>({key:k,value:$("s-"+k).value}));
+ const{error}=await sb.from("settings").upsert(rows);toast(error?error.message:"บันทึกแล้ว")}
+start();
+</script></body></html>
