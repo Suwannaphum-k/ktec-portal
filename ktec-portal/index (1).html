@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KTEC</title>
+<style>
+body{margin:0;background:#050d1a;color:#e8f1fb;font:16px/1.6 "Noto Sans Thai","Segoe UI",sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
+.c{max-width:420px;width:100%;padding:24px}
+h1{color:#16e0f5;letter-spacing:2px;margin:0 0 16px}
+a{display:block;padding:14px 16px;margin-bottom:10px;border:1px solid #16345a;border-radius:12px;background:#0b1830;color:#e8f1fb;text-decoration:none}
+a:hover{border-color:#16e0f5}
+p{color:#8aa4c4}
+</style>
+</head>
+<body>
+<div class="c">
+<h1>KTEC</h1>
+<p id="m">กำลังเปิดหน้าหลัก...</p>
+<a href="ktec-portal/">หน้าหลัก KTEC (โฟลเดอร์ ktec-portal)</a>
+<a href="ktec-dtc-motorcycle.html">ค้นรหัส DTC มอเตอร์ไซค์ฮอนด้า</a>
+<a href="owner.html">owner.html</a>
+</div>
+<script>
+fetch("ktec-portal/index.html",{method:"HEAD"}).then(function(r){
+  if(r.ok){location.replace("ktec-portal/")}
+  else{document.getElementById("m").textContent="เลือกหน้าที่ต้องการ"}
+}).catch(function(){document.getElementById("m").textContent="เลือกหน้าที่ต้องการ"});
+</script>
+</body>
+</html>
