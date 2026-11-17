@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KTEC Gauge Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b12; --panel:#0e1622; --panel2:#142033; --line:#1f3350;
+  --text:#e6f1ff; --mute:#8aa0bd; --neon:#00e5ff; --neon2:#00ffa3; --warn:#ffb020; --bad:#ff4d6d;
+  --glow:0 0 12px rgba(0,229,255,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(1200px 600px at 70% -10%,#0d2236 0,transparent 60%),var(--bg);color:var(--text);font-family:'Kanit',system-ui,sans-serif;min-height:100vh}
+a{color:var(--neon)}
+header{position:sticky;top:0;z-index:10;background:rgba(7,11,18,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-family:'Orbitron',sans-serif;font-weight:800;font-size:22px;letter-spacing:2px;color:var(--neon);text-shadow:var(--glow);cursor:pointer}
+.logo small{display:block;font-family:'Kanit';font-weight:300;font-size:10px;letter-spacing:1px;color:var(--mute);text-shadow:none}
+nav{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+nav button{background:none;border:1px solid transparent;color:var(--mute);padding:7px 12px;border-radius:8px;font:inherit;cursor:pointer}
+nav button.on,nav button:hover{color:var(--neon);border-color:var(--line);background:var(--panel)}
+.right{display:flex;gap:8px;align-items:center}
+main{max-width:1060px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;margin:6px 0 4px}
+h2{font-size:19px;margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 18px}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 18px rgba(0,0,0,.35)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.btn{background:linear-gradient(180deg,#12394f,#0b2535);color:var(--neon);border:1px solid #1d5b78;border-radius:10px;padding:9px 16px;font:inherit;cursor:pointer;box-shadow:0 3px 0 #06141d,var(--glow);transition:.15s}
+.btn:hover{filter:brightness(1.2)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #06141d}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.ghost{background:none;box-shadow:none;border-color:var(--line);color:var(--mute)}
+.btn.danger{color:var(--bad);border-color:#5b1d2c}
+input,select,textarea{width:100%;background:#08111b;border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--text);font:inherit;box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--neon)}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:150px}
+.tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+.tag.new{color:var(--neon2);border-color:#0b5a40}
+.tag.lock{color:var(--warn);border-color:#5b4310}
+table{width:100%;border-collapse:collapse}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:14px}
+th{color:var(--mute);font-weight:400}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.msg{padding:10px 12px;border-radius:10px;margin:10px 0;font-size:14px}
+.msg.ok{background:#07241b;border:1px solid #0b5a40;color:var(--neon2)}
+.msg.err{background:#2a0d15;border:1px solid #5b1d2c;color:var(--bad)}
+.msg.info{background:#0a1f2c;border:1px solid #1d5b78;color:var(--neon)}
+.hero{padding:26px 18px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(135deg,#0d2236,#0a1018);margin-bottom:16px;box-shadow:inset 0 0 40px rgba(0,229,255,.06)}
+.big{font-family:'Orbitron';font-size:34px;color:var(--neon);text-shadow:var(--glow)}
+.notes{white-space:pre-line;color:var(--mute);font-size:14px;margin:6px 0 12px}
+footer{text-align:center;color:var(--mute);font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="logo" onclick="go('home')">KTEC<small id="tagline"></small></div>
+  <nav id="nav"></nav>
+  <div class="right">
+    <button class="btn ghost sm" id="langBtn"></button>
+    <span id="userBox"></span>
+  </div>
+</div></header>
+<main id="app"></main>
+<footer id="foot"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============ ตั้งค่า (CONFIG) ============
+   ปล่อย SUPABASE_URL ว่างไว้ = โหมดทดลอง (เก็บข้อมูลในเบราว์เซอร์เครื่องนี้เท่านั้น)
+   ใส่ค่าจาก Supabase เมื่อพร้อมใช้งานจริง (ดู SETUP.md)                          */
+const CFG = {
+  SUPABASE_URL: '',
+  SUPABASE_ANON_KEY: '',
+  BUCKET_PUBLIC: 'firmware-public',    // ไฟล์รุ่นสาธารณะ + version.json (ให้เกจดึงได้)
+  BUCKET_PRIVATE: 'firmware-private',  // ไฟล์รุ่นเฉพาะลูกค้า (ลิงก์ชั่วคราวหลังล็อกอิน)
+  BRAND: 'KTEC',
+  SUPPORT_LINK: ''   // เช่น https://line.me/ti/p/xxxx
+};
+const DEMO = !CFG.SUPABASE_URL;
+
+/* ============ ข้อความสองภาษา ============ */
+const T = {
+ th:{tag:'ระบบอัพเดตและจัดการเกจ',home:'หน้าแรก',fw:'เฟิร์มแวร์',gauges:'เกจของฉัน',dtc:'ค้นรหัส DTC',guide:'วิธีใช้',admin:'ผู้ดูแล',
+  login:'เข้าสู่ระบบ',logout:'ออก',signup:'สมัครสมาชิก',email:'อีเมล',pass:'รหัสผ่าน',
+  heroT:'ศูนย์รวมเกจ KTEC',heroS:'โหลดเฟิร์มแวร์ล่าสุด ลงทะเบียนเกจ และค้นความหมายรหัส DTC ได้ที่เดียว',
+  latest:'เวอร์ชันล่าสุด',download:'ดาวน์โหลด',notes:'สิ่งที่เปลี่ยน',all:'ทุกเวอร์ชัน',public:'สาธารณะ',customers:'เฉพาะลูกค้า',
+  needLogin:'ต้องเข้าสู่ระบบและลงทะเบียนเกจก่อนจึงจะโหลดได้',needGauge:'ลงทะเบียนเกจอย่างน้อย 1 เครื่องก่อนจึงจะโหลดรุ่นสำหรับลูกค้าได้',
+  addGauge:'ลงทะเบียนเกจ',serial:'เลขซีเรียล',gname:'ชื่อเรียก (เช่น CBR150 ของผม)',fwv:'เฟิร์มแวร์ที่ลงอยู่',save:'บันทึก',
+  noGauge:'ยังไม่มีเกจที่ลงทะเบียน',remove:'ลบ',date:'วันที่',version:'เวอร์ชัน',
+  dtcS:'พิมพ์รหัส (เช่น P0107) หรือคำค้น',code:'รหัส',meaning:'ความหมาย',noDtc:'ไม่พบรหัสนี้',
+  gTitle:'วิธีอัพเดตเกจแบบออนไลน์',
+  g:['เข้าเมนู SETTINGS บนเกจ แล้วใส่ชื่อ WiFi (บ้านหรือฮอตสปอตมือถือ) พร้อมรหัสผ่าน','กดปุ่ม CHECK UPDATE เกจจะถามเว็บว่ามีเวอร์ชันใหม่ไหม','ถ้ามี กดยืนยัน รอแถบความคืบหน้าจนเสร็จ ห้ามดับเครื่อง','เกจรีบูตเอง ตรวจเลขเวอร์ชันในหน้า SETTINGS'],
+  gWarn:'ควรอัพเดตตอนจอดรถและต่อไฟเลี้ยงให้เสถียรเท่านั้น',
+  adminT:'จัดการระบบ',newRel:'ปล่อยเวอร์ชันใหม่',noteTh:'รายละเอียด (ไทย)',noteEn:'รายละเอียด (อังกฤษ)',access:'สิทธิ์ดาวน์โหลด',file:'ไฟล์ .bin',publish:'ปล่อยเวอร์ชัน',
+  allG:'เกจที่ลงทะเบียนทั้งหมด',owner:'เจ้าของ',nodata:'ยังไม่มีข้อมูล',
+  demoMsg:'โหมดทดลอง: ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น ยังไม่ได้เชื่อมฐานข้อมูลจริง (ดู SETUP.md) อีเมลที่มีคำว่า admin จะเป็นผู้ดูแล',
+  okSaved:'บันทึกแล้ว',errGeneric:'เกิดข้อผิดพลาด: ',confirmDel:'ลบรายการนี้?',notAdmin:'หน้านี้สำหรับผู้ดูแลเท่านั้น',
+  pleaseLogin:'กรุณาเข้าสู่ระบบ',report:'แจ้งปัญหา',reportS:'บอกอาการที่พบ ทีมงานจะติดต่อกลับ',rGauge:'รหัสเกจ',rCat:'ประเภทปัญหา',rContact:'ช่องทางติดต่อ (เบอร์/LINE/อีเมล)',rDesc:'อธิบายอาการ',rSend:'ส่งเรื่อง',rSent:'ส่งเรื่องเรียบร้อย ขอบคุณครับ',rNeed:'กรุณากรอกอาการและช่องทางติดต่อ',rCats:['เชื่อมต่อ ECU ไม่ได้','ค่าบนจอผิดปกติ','อัพเดตไม่สำเร็จ','จอ/ทัช','WiFi/เว็บเกจ','อื่นๆ'],reports:'เรื่องที่แจ้งเข้ามา',status:'สถานะ',open:'รอดำเนินการ',done:'เรียบร้อย',markDone:'ปิดเรื่อง',reopen:'เปิดใหม่',detected:'ตรวจพบเกจ',newer:'มีเวอร์ชันใหม่กว่าที่คุณใช้อยู่',uptodate:'เกจของคุณเป็นเวอร์ชันล่าสุดแล้ว',checkMail:'สมัครแล้ว ตรวจอีเมลเพื่อยืนยัน (ถ้าเปิดใช้) แล้วเข้าสู่ระบบ',
+  support:'ติดต่อทีมงาน',manifest:'ลิงก์ที่เกจใช้เช็กเวอร์ชัน',pickFile:'กรุณาเลือกไฟล์ .bin'},
+ en:{tag:'Gauge update & management',home:'Home',fw:'Firmware',gauges:'My gauges',dtc:'DTC lookup',guide:'Guide',admin:'Admin',
+  login:'Log in',logout:'Log out',signup:'Sign up',email:'Email',pass:'Password',
+  heroT:'KTEC Gauge Hub',heroS:'Get the latest firmware, register your gauge and look up DTC codes in one place',
+  latest:'Latest version',download:'Download',notes:'What changed',all:'All versions',public:'Public',customers:'Customers only',
+  needLogin:'Log in and register a gauge to download this',needGauge:'Register at least one gauge to download customer releases',
+  addGauge:'Register a gauge',serial:'Serial number',gname:'Nickname (e.g. My CBR150)',fwv:'Installed firmware',save:'Save',
+  noGauge:'No gauges registered yet',remove:'Remove',date:'Date',version:'Version',
+  dtcS:'Type a code (e.g. P0107) or keyword',code:'Code',meaning:'Meaning',noDtc:'Code not found',
+  gTitle:'How to update your gauge online',
+  g:['Open SETTINGS on the gauge and enter your WiFi name (home or phone hotspot) and password','Tap CHECK UPDATE; the gauge asks this site for a newer version','If one exists, confirm and wait for the progress bar. Do not power off','The gauge reboots by itself; verify the version in SETTINGS'],
+  gWarn:'Only update while parked, with stable power.',
+  adminT:'Administration',newRel:'Publish a new release',noteTh:'Notes (Thai)',noteEn:'Notes (English)',access:'Download access',file:'.bin file',publish:'Publish',
+  allG:'All registered gauges',owner:'Owner',nodata:'No data yet',
+  demoMsg:'Demo mode: data is stored in this browser only; no real database connected (see SETUP.md). Emails containing "admin" become admins.',
+  okSaved:'Saved',errGeneric:'Error: ',confirmDel:'Delete this item?',notAdmin:'Admins only',
+  pleaseLogin:'Please log in',report:'Report a problem',reportS:'Tell us what is wrong and we will get back to you',rGauge:'Gauge ID',rCat:'Problem type',rContact:'Contact (phone / LINE / email)',rDesc:'Describe the problem',rSend:'Send',rSent:'Sent. Thank you!',rNeed:'Please fill in the description and a contact',rCats:['Cannot connect to ECU','Wrong values on screen','Update failed','Screen / touch','WiFi / gauge web page','Other'],reports:'Reports received',status:'Status',open:'Open',done:'Done',markDone:'Close',reopen:'Reopen',detected:'Gauge detected',newer:'A newer version than yours is available',uptodate:'Your gauge is up to date',checkMail:'Signed up. Check your email to confirm (if enabled), then log in.',
+  support:'Contact us',manifest:'Version-check link used by the gauge',pickFile:'Please choose a .bin file'}
+};
+let lang = localStorage.getItem('ktec_lang') || 'th';
+const t = k => (T[lang][k] ?? k);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ข้อมูล DTC ตั้งต้น (รหัส OBD-II ทั่วไป) เพิ่มรหัสบลิงก์ของ Honda/Keihin เองได้ในแท็บผู้ดูแลหรือในตาราง dtc */
+const DTC_SEED = [
+ ['P0105','MAP sensor circuit malfunction','วงจรเซ็นเซอร์ MAP ผิดปกติ'],
+ ['P0107','MAP sensor circuit low input','สัญญาณเซ็นเซอร์ MAP ต่ำเกินไป'],
+ ['P0108','MAP sensor circuit high input','สัญญาณเซ็นเซอร์ MAP สูงเกินไป'],
+ ['P0112','Intake air temperature sensor low input','สัญญาณเซ็นเซอร์อุณหภูมิอากาศเข้าต่ำเกินไป'],
+ ['P0113','Intake air temperature sensor high input','สัญญาณเซ็นเซอร์อุณหภูมิอากาศเข้าสูงเกินไป'],
+ ['P0117','Engine coolant temperature sensor low input','สัญญาณเซ็นเซอร์อุณหภูมิน้ำหล่อเย็นต่ำเกินไป'],
+ ['P0118','Engine coolant temperature sensor high input','สัญญาณเซ็นเซอร์อุณหภูมิน้ำหล่อเย็นสูงเกินไป'],
+ ['P0122','Throttle position sensor low input','สัญญาณเซ็นเซอร์ตำแหน่งปีกผีเสื้อ (TPS) ต่ำเกินไป'],
+ ['P0123','Throttle position sensor high input','สัญญาณเซ็นเซอร์ตำแหน่งปีกผีเสื้อ (TPS) สูงเกินไป'],
+ ['P0130','O2 sensor circuit malfunction','วงจรเซ็นเซอร์ออกซิเจนผิดปกติ'],
+ ['P0335','Crankshaft position sensor circuit malfunction','วงจรเซ็นเซอร์ตำแหน่งเพลาข้อเหวี่ยงผิดปกติ'],
+ ['P0351','Ignition coil circuit malfunction','วงจรคอยล์จุดระเบิดผิดปกติ'],
+ ['P0201','Injector circuit malfunction','วงจรหัวฉีดผิดปกติ'],
+ ['P0562','System voltage low','แรงดันระบบต่ำ']
+];
+
+/* ============ ชั้นข้อมูล (โหมดทดลอง / Supabase) ============ */
+let sb = null;
+if(!DEMO) sb = supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+const LS = {get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}, set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const uid = () => Math.random().toString(36).slice(2,10);
+
+const DB = {
+  user:null, isAdmin:false,
+  async init(){
+    if(DEMO){ this.user = LS.get('ktec_demo_user',null); this.isAdmin = !!(this.user && /admin/i.test(this.user.email)); return; }
+    const {data} = await sb.auth.getSession();
+    await this._setUser(data.session?.user);
+    sb.auth.onAuthStateChange(async (_e,s)=>{ await this._setUser(s?.user); render(); });
+  },
+  async _setUser(u){
+    this.user = u ? {id:u.id,email:u.email} : null; this.isAdmin = false;
+    if(u){ const {data} = await sb.from('profiles').select('is_admin').eq('id',u.id).maybeSingle(); this.isAdmin = !!data?.is_admin; }
+  },
+  async signUp(email,pass){
+    if(DEMO){ return this.signIn(email,pass); }
+    const {error} = await sb.auth.signUp({email,password:pass}); if(error) throw error; return 'check';
+  },
+  async signIn(email,pass){
+    if(DEMO){ this.user={id:'u_'+email,email}; this.isAdmin=/admin/i.test(email); LS.set('ktec_demo_user',this.user); return; }
+    const {error} = await sb.auth.signInWithPassword({email,password:pass}); if(error) throw error;
+  },
+  async signOut(){ if(DEMO){ localStorage.removeItem('ktec_demo_user'); this.user=null; this.isAdmin=false; } else await sb.auth.signOut(); },
+
+  async firmware(){
+    if(DEMO){ return LS.get('ktec_demo_fw',[{id:'f1',version:'1.0.0',notes_th:'เวอร์ชันแรก\nหน้า RING/ARC/BAR/DIGIT, DTC, AFR MAP',notes_en:'First release\nRING/ARC/BAR/DIGIT pages, DTC, AFR MAP',access:'public',file_path:'demo.bin',created_at:new Date().toISOString()}]); }
+    const {data,error} = await sb.from('firmware').select('*').order('created_at',{ascending:false}); if(error) throw error; return data;
+  },
+  async gauges(all){
+    if(DEMO){ const g = LS.get('ktec_demo_gauges',[]); return all ? g : g.filter(x=>x.user_id===this.user?.id); }
+    let q = sb.from('gauges').select('*').order('created_at',{ascending:false}); if(!all) q = q.eq('user_id',this.user.id);
+    const {data,error} = await q; if(error) throw error; return data;
+  },
+  async addGauge(g){
+    if(DEMO){ const a=LS.get('ktec_demo_gauges',[]); a.unshift({id:uid(),user_id:this.user.id,owner:this.user.email,...g,created_at:new Date().toISOString()}); LS.set('ktec_demo_gauges',a); return; }
+    const {error} = await sb.from('gauges').insert({user_id:this.user.id,...g}); if(error) throw error;
+  },
+  async delGauge(id){
+    if(DEMO){ LS.set('ktec_demo_gauges',LS.get('ktec_demo_gauges',[]).filter(x=>x.id!==id)); return; }
+    const {error} = await sb.from('gauges').delete().eq('id',id); if(error) throw error;
+  },
+  async publish(r,file){
+    if(DEMO){ const a=await this.firmware(); a.unshift({id:uid(),...r,file_path:file.name,created_at:new Date().toISOString()}); LS.set('ktec_demo_fw',a); return; }
+    const path = `${r.version}/${file.name}`;
+    const bucket = r.access==='public' ? CFG.BUCKET_PUBLIC : CFG.BUCKET_PRIVATE;
+    const up = await sb.storage.from(bucket).upload(path,file,{upsert:true}); if(up.error) throw up.error;
+    const {error} = await sb.from('firmware').insert({...r,file_path:path}); if(error) throw error;
+    if(r.access==='public'){   // เขียน version.json ให้เกจเช็กเวอร์ชัน
+      const url = sb.storage.from(CFG.BUCKET_PUBLIC).getPublicUrl(path).data.publicUrl;
+      const manifest = new Blob([JSON.stringify({version:r.version,url,notes:r.notes_en||r.notes_th||''})],{type:'application/json'});
+      const m = await sb.storage.from(CFG.BUCKET_PUBLIC).upload('version.json',manifest,{upsert:true,cacheControl:'30',contentType:'application/json'}); if(m.error) throw m.error;
+    }
+  },
+  async delFirmware(id){
+    if(DEMO){ LS.set('ktec_demo_fw',(await this.firmware()).filter(x=>x.id!==id)); return; }
+    const {error} = await sb.from('firmware').delete().eq('id',id); if(error) throw error;
+  },
+  async fileUrl(f){
+    if(DEMO) return null;
+    if(f.access==='public') return sb.storage.from(CFG.BUCKET_PUBLIC).getPublicUrl(f.file_path).data.publicUrl;
+    const {data,error} = await sb.storage.from(CFG.BUCKET_PRIVATE).createSignedUrl(f.file_path,300); if(error) throw error; return data.signedUrl;
+  },
+  async reports(){
+    if(DEMO) return LS.get('ktec_demo_reports',[]);
+    const {data,error} = await sb.from('reports').select('*').order('created_at',{ascending:false}); if(error) throw error; return data;
+  },
+  async addReport(r){
+    if(DEMO){ const a=LS.get('ktec_demo_reports',[]); a.unshift({id:uid(),status:'open',...r,created_at:new Date().toISOString()}); LS.set('ktec_demo_reports',a); return; }
+    const {error} = await sb.from('reports').insert(r); if(error) throw error;   // ลูกค้าไม่ต้องล็อกอินก็ส่งได้
+  },
+  async setReport(id,status){
+    if(DEMO){ LS.set('ktec_demo_reports',LS.get('ktec_demo_reports',[]).map(x=>x.id===id?{...x,status}:x)); return; }
+    const {error} = await sb.from('reports').update({status}).eq('id',id); if(error) throw error;
+  },
+  async delReport(id){
+    if(DEMO){ LS.set('ktec_demo_reports',LS.get('ktec_demo_reports',[]).filter(x=>x.id!==id)); return; }
+    const {error} = await sb.from('reports').delete().eq('id',id); if(error) throw error;
+  },
+  async dtc(){
+    if(DEMO) return DTC_SEED.map(([code,en,th])=>({code,en,th}));
+    const {data} = await sb.from('dtc').select('*').order('code'); return (data&&data.length)? data : DTC_SEED.map(([code,en,th])=>({code,en,th}));
+  }
+};
+
+/* ============ แสดงผล ============ */
+const QS = new URLSearchParams(location.search);
+const DEV = {id:(QS.get('id')||'').slice(0,20), fw:(QS.get('fw')||'').slice(0,20)};
+const verCmp = (a,b)=>{const x=String(a).split('.').map(n=>parseInt(n)||0),y=String(b).split('.').map(n=>parseInt(n)||0);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0)?1:-1}return 0};
+let route = (['fw','report'].includes(QS.get('page')) ? QS.get('page') : 'home'), flash = null;
+const $ = s => document.querySelector(s);
+function go(r){ route=r; flash=null; render(); window.scrollTo(0,0); }
+function say(type,text){ flash={type,text}; }
+const flashHtml = () => flash ? `<div class="msg ${flash.type}">${esc(flash.text)}</div>` : '';
+const fmtDate = d => new Date(d).toLocaleDateString(lang==='th'?'th-TH':'en-GB');
+const notesOf = f => lang==='th' ? (f.notes_th||f.notes_en||'') : (f.notes_en||f.notes_th||'');
+
+function chrome(){
+  document.documentElement.lang = lang;
+  $('#tagline').textContent = t('tag');
+  $('#langBtn').textContent = lang==='th' ? 'EN' : 'ไทย';
+  const items = [['home','home'],['fw','fw'],['report','report'],['gauges','gauges'],['dtc','dtc'],['guide','guide']];
+  if(DB.isAdmin) items.push(['admin','admin']);
+  $('#nav').innerHTML = items.map(([r,k])=>`<button class="${route===r?'on':''}" onclick="go('${r}')">${t(k)}</button>`).join('');
+  $('#userBox').innerHTML = DB.user
+    ? `<span class="tag">${esc(DB.user.email)}</span> <button class="btn sm ghost" onclick="logout()">${t('logout')}</button>`
+    : `<button class="btn sm" onclick="go('login')">${t('login')}</button>`;
+  $('#foot').innerHTML = `© ${new Date().getFullYear()} ${CFG.BRAND}` + (CFG.SUPPORT_LINK?` · <a href="${esc(CFG.SUPPORT_LINK)}" target="_blank" rel="noopener">${t('support')}</a>`:'');
+}
+async function render(){
+  chrome();
+  const app = $('#app');
+  try{
+    const views = {home:vHome,fw:vFw,report:vReport,gauges:vGauges,dtc:vDtc,guide:vGuide,login:vLogin,admin:vAdmin};
+    const demoBar = DEMO ? `<div class="msg info">${t('demoMsg')}</div>` : '';
+    app.innerHTML = demoBar + flashHtml() + await (views[route]||vHome)();
+    if(route==='dtc') searchDtc();
+  }catch(e){ app.innerHTML = `<div class="msg err">${t('errGeneric')}${esc(e.message||e)}</div>`; }
+}
+
+async function vHome(){
+  const fw = await DB.firmware(); const l = fw[0];
+  return `<div class="hero"><h1>${t('heroT')}</h1><p class="sub">${t('heroS')}</p>
+    ${l?`<div class="sub">${t('latest')}</div><div class="big">v${esc(l.version)}</div>
+    <div class="notes">${esc(notesOf(l))}</div>
+    <button class="btn" onclick="go('fw')">${t('fw')}</button>`:''}</div>
+  <div class="grid">
+    <div class="card"><h2>${t('fw')}</h2><p class="sub">${t('heroS')}</p><button class="btn sm" onclick="go('fw')">→</button></div>
+    <div class="card"><h2>${t('gauges')}</h2><p class="sub">${t('addGauge')}</p><button class="btn sm" onclick="go('gauges')">→</button></div>
+    <div class="card"><h2>${t('dtc')}</h2><p class="sub">${t('dtcS')}</p><button class="btn sm" onclick="go('dtc')">→</button></div>
+  </div>`;
+}
+
+async function vFw(){
+  const fw = await DB.firmware();
+  const myG = DB.user ? await DB.gauges(false) : [];
+  const rows = fw.map((f,i)=>{
+    const open = f.access==='public';
+    const can = open || (DB.user && myG.length>0);
+    const hint = open ? '' : (!DB.user ? t('needLogin') : (!myG.length ? t('needGauge') : ''));
+    return `<div class="card"><div class="row" style="align-items:center">
+      <div><span class="big" style="font-size:24px">v${esc(f.version)}</span>
+        ${i===0?'<span class="tag new">NEW</span>':''}
+        <span class="tag ${open?'':'lock'}">${open?t('public'):t('customers')}</span>
+        <div class="sub" style="margin:2px 0 0">${fmtDate(f.created_at)}</div></div>
+      <div style="text-align:right"><button class="btn" ${can?'':'disabled style="opacity:.4;cursor:not-allowed"'} onclick="dl('${esc(f.id)}')">${t('download')}</button></div></div>
+      <div class="notes"><b>${t('notes')}</b>\n${esc(notesOf(f))}</div>
+      ${hint?`<div class="msg info">${hint}</div>`:''}</div>`;
+  }).join('');
+  let banner = '';
+  if(DEV.id){
+    const l = fw.find(x=>x.access==='public') || fw[0];
+    const st = (DEV.fw && l) ? (verCmp(l.version,DEV.fw)>0 ? `<div class="msg ok">${t('newer')}: v${esc(l.version)}</div>` : `<div class="msg info">${t('uptodate')}</div>`) : '';
+    banner = `<div class="card"><span class="tag new">${t('detected')}</span> <b class="mono">${esc(DEV.id)}</b>${DEV.fw?` · v${esc(DEV.fw)}`:''}${st}</div>`;
+  }
+  return `<h1>${t('fw')}</h1><p class="sub">${t('all')}</p>${banner}${rows||`<div class="card">${t('nodata')}</div>`}`;
+}
+async function dl(id){
+  try{
+    const f = (await DB.firmware()).find(x=>x.id===id);
+    const url = await DB.fileUrl(f);
+    if(!url){ say('info','Demo: '+f.file_path); return render(); }
+    location.href = url;
+  }catch(e){ say('err',t('errGeneric')+(e.message||e)); render(); }
+}
+
+async function vGauges(){
+  if(!DB.user) return `<div class="card">${t('pleaseLogin')} <button class="btn sm" onclick="go('login')">${t('login')}</button></div>`;
+  const g = await DB.gauges(false);
+  const list = g.length ? `<table><tr><th>${t('gname')}</th><th>${t('serial')}</th><th>${t('fwv')}</th><th>${t('date')}</th><th></th></tr>
+    ${g.map(x=>`<tr><td>${esc(x.name)}</td><td class="mono">${esc(x.serial)}</td><td>${esc(x.fw_version||'-')}</td><td>${fmtDate(x.created_at)}</td>
+    <td><button class="btn sm danger" onclick="delG('${esc(x.id)}')">${t('remove')}</button></td></tr>`).join('')}</table>` : `<p class="sub">${t('noGauge')}</p>`;
+  return `<h1>${t('gauges')}</h1>
+   <div class="card">${list}</div>
+   <div class="card"><h2>${t('addGauge')}</h2>
+     <div class="row"><div><label>${t('serial')}</label><input id="gs" placeholder="KT-A1B2C3" value="${esc(DEV.id)}"></div>
+     <div><label>${t('gname')}</label><input id="gn"></div>
+     <div><label>${t('fwv')}</label><input id="gf" placeholder="1.0.0" value="${esc(DEV.fw)}"></div></div>
+     <p><button class="btn" onclick="addG()">${t('save')}</button></p></div>`;
+}
+async function addG(){
+  const serial=$('#gs').value.trim(), name=$('#gn').value.trim(), fw_version=$('#gf').value.trim();
+  if(!serial) return;
+  try{ await DB.addGauge({serial,name,fw_version}); say('ok',t('okSaved')); }catch(e){ say('err',t('errGeneric')+(e.message||e)); }
+  render();
+}
+async function delG(id){ if(!confirm(t('confirmDel'))) return; try{ await DB.delGauge(id); }catch(e){ say('err',e.message); } render(); }
+
+async function vReport(){
+  return `<h1>${t('report')}</h1><p class="sub">${t('reportS')}</p><div class="card" style="max-width:560px">
+    <div class="row"><div><label>${t('rGauge')}</label><input id="rg" value="${esc(DEV.id)}" maxlength="30"></div>
+    <div><label>${t('fwv')}</label><input id="rf" value="${esc(DEV.fw)}" maxlength="20"></div></div>
+    <label>${t('rCat')}</label><select id="rc">${T[lang].rCats.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join('')}</select>
+    <label>${t('rContact')}</label><input id="rt" maxlength="120">
+    <label>${t('rDesc')}</label><textarea id="rd" rows="5" maxlength="2000"></textarea>
+    <p><button class="btn" onclick="sendReport()">${t('rSend')}</button></p></div>`;
+}
+async function sendReport(){
+  const r = {gauge_id:$('#rg').value.trim(), fw_version:$('#rf').value.trim(), category:T[lang].rCats[+$('#rc').value], contact:$('#rt').value.trim(), description:$('#rd').value.trim()};
+  if(!r.description || !r.contact){ say('err',t('rNeed')); return render(); }
+  try{ await DB.addReport(r); say('ok',t('rSent')); route='home'; }catch(e){ say('err',t('errGeneric')+(e.message||e)); }
+  render();
+}
+async function setR(id,st){ try{ await DB.setReport(id,st); }catch(e){ say('err',e.message); } render(); }
+async function delR(id){ if(!confirm(t('confirmDel'))) return; try{ await DB.delReport(id); }catch(e){ say('err',e.message); } render(); }
+
+async function vDtc(){
+  return `<h1>${t('dtc')}</h1><div class="card"><input id="dq" placeholder="${t('dtcS')}" oninput="searchDtc()"><div id="dres" style="margin-top:10px"></div></div>`;
+}
+async function searchDtc(){
+  const q = ($('#dq')?.value||'').trim().toLowerCase();
+  const all = await DB.dtc();
+  const hit = all.filter(d=>!q || d.code.toLowerCase().includes(q) || (d.en||'').toLowerCase().includes(q) || (d.th||'').toLowerCase().includes(q));
+  $('#dres').innerHTML = hit.length ? `<table><tr><th>${t('code')}</th><th>${t('meaning')}</th></tr>${hit.map(d=>`<tr><td class="mono">${esc(d.code)}</td><td>${esc(lang==='th'?(d.th||d.en):(d.en||d.th))}</td></tr>`).join('')}</table>` : t('noDtc');
+}
+
+async function vGuide(){
+  const manifestUrl = DEMO ? location.href.replace(/[^/]*$/,'')+'version.json' : `${CFG.SUPABASE_URL}/storage/v1/object/public/${CFG.BUCKET_PUBLIC}/version.json`;
+  return `<h1>${t('gTitle')}</h1><div class="card"><ol>${T[lang].g.map(s=>`<li style="margin:8px 0">${s}</li>`).join('')}</ol>
+    <div class="msg info">${t('gWarn')}</div></div>
+    <div class="card"><label>${t('manifest')}</label><input readonly class="mono" value="${esc(manifestUrl)}" onclick="this.select()"></div>`;
+}
+
+function vLogin(){
+  return `<h1>${t('login')}</h1><div class="card" style="max-width:420px">
+    <label>${t('email')}</label><input id="le" type="email" autocomplete="email">
+    <label>${t('pass')}</label><input id="lp" type="password" autocomplete="current-password">
+    <p class="row"><button class="btn" onclick="doLogin()">${t('login')}</button><button class="btn ghost" onclick="doSignup()">${t('signup')}</button></p></div>`;
+}
+async function doLogin(){
+  try{ await DB.signIn($('#le').value.trim(),$('#lp').value); route='home'; flash=null; }catch(e){ say('err',t('errGeneric')+(e.message||e)); }
+  render();
+}
+async function doSignup(){
+  try{ const r = await DB.signUp($('#le').value.trim(),$('#lp').value); if(r==='check'){ say('ok',t('checkMail')); } else { route='home'; flash=null; } }catch(e){ say('err',t('errGeneric')+(e.message||e)); }
+  render();
+}
+async function logout(){ await DB.signOut(); route='home'; render(); }
+
+async function vAdmin(){
+  if(!DB.isAdmin) return `<div class="msg err">${t('notAdmin')}</div>`;
+  const [fw,g,rp] = await Promise.all([DB.firmware(),DB.gauges(true),DB.reports()]);
+  const repHtml = `<div class="card"><h2>${t('reports')} (${rp.filter(x=>x.status!=='done').length}/${rp.length})</h2>${rp.length?`<table><tr><th>${t('date')}</th><th>${t('rGauge')}</th><th>${t('rCat')}</th><th>${t('rDesc')}</th><th>${t('rContact')}</th><th>${t('status')}</th><th></th></tr>
+    ${rp.map(x=>`<tr><td>${fmtDate(x.created_at)}</td><td class="mono">${esc(x.gauge_id||'-')}<br><small>${x.fw_version?'v'+esc(x.fw_version):''}</small></td><td>${esc(x.category)}</td><td style="max-width:260px;white-space:pre-wrap">${esc(x.description)}</td><td>${esc(x.contact)}</td>
+    <td><span class="tag ${x.status==='done'?'new':'lock'}">${x.status==='done'?t('done'):t('open')}</span></td>
+    <td><button class="btn sm ghost" onclick="setR('${esc(x.id)}','${x.status==='done'?'open':'done'}')">${x.status==='done'?t('reopen'):t('markDone')}</button> <button class="btn sm danger" onclick="delR('${esc(x.id)}')">${t('remove')}</button></td></tr>`).join('')}</table>`:t('nodata')}</div>`;
+  return `<h1>${t('adminT')}</h1>${repHtml}
+  <div class="card"><h2>${t('newRel')}</h2>
+    <div class="row"><div><label>${t('version')}</label><input id="av" placeholder="1.0.1"></div>
+    <div><label>${t('access')}</label><select id="aa"><option value="public">${t('public')}</option><option value="customers">${t('customers')}</option></select></div>
+    <div><label>${t('file')}</label><input id="af" type="file" accept=".bin"></div></div>
+    <label>${t('noteTh')}</label><textarea id="at" rows="3"></textarea>
+    <label>${t('noteEn')}</label><textarea id="ae" rows="3"></textarea>
+    <p><button class="btn" onclick="doPublish()">${t('publish')}</button></p></div>
+  <div class="card"><h2>${t('all')}</h2><table><tr><th>${t('version')}</th><th>${t('access')}</th><th>${t('date')}</th><th></th></tr>
+    ${fw.map(f=>`<tr><td>v${esc(f.version)}</td><td>${f.access==='public'?t('public'):t('customers')}</td><td>${fmtDate(f.created_at)}</td>
+    <td><button class="btn sm danger" onclick="delF('${esc(f.id)}')">${t('remove')}</button></td></tr>`).join('')}</table></div>
+  <div class="card"><h2>${t('allG')} (${g.length})</h2>${g.length?`<table><tr><th>${t('serial')}</th><th>${t('gname')}</th><th>${t('fwv')}</th><th>${t('owner')}</th></tr>
+    ${g.map(x=>`<tr><td class="mono">${esc(x.serial)}</td><td>${esc(x.name)}</td><td>${esc(x.fw_version||'-')}</td><td>${esc(x.owner||x.user_id||'')}</td></tr>`).join('')}</table>`:t('nodata')}</div>`;
+}
+async function doPublish(){
+  const version=$('#av').value.trim(), file=$('#af').files[0];
+  if(!version) return;
+  if(!file){ say('err',t('pickFile')); return render(); }
+  try{ await DB.publish({version,access:$('#aa').value,notes_th:$('#at').value,notes_en:$('#ae').value},file); say('ok',t('okSaved')); }
+  catch(e){ say('err',t('errGeneric')+(e.message||e)); }
+  render();
+}
+async function delF(id){ if(!confirm(t('confirmDel'))) return; try{ await DB.delFirmware(id); }catch(e){ say('err',e.message); } render(); }
+
+$('#langBtn').onclick = ()=>{ lang = lang==='th'?'en':'th'; localStorage.setItem('ktec_lang',lang); render(); };
+DB.init().then(render).catch(e=>{ $('#app').innerHTML = `<div class="msg err">${esc(e.message||e)}</div>`; });
+</script>
+</body>
+</html>
