@@ -94,6 +94,27 @@ small.hint{display:block;margin-top:12px;color:var(--muted)}
 .code span{color:var(--text)}
 .empty{color:var(--muted);padding:14px 4px}
 
+/* ---------- DTC มอเตอร์ไซค์ ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.chip{padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:14px}
+.chip:hover{color:var(--text)}
+.chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,.08)}
+.dbox{margin-top:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--muted)}
+.dbox b{color:var(--text);font-weight:500}
+.item{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.item .head{display:flex;gap:16px;align-items:center;padding:12px 14px;list-style:none}
+.item summary.head{cursor:pointer}
+.item summary.head::-webkit-details-marker{display:none}
+.item[open]{border-color:rgba(0,229,255,.4)}
+.dcode{font:700 20px/1 "Orbitron",sans-serif;color:var(--cyan);min-width:56px}
+.dt{flex:1}
+.tag{font-size:12px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.f{border-color:var(--warn);color:var(--warn)}
+.dbody{padding:0 14px 14px 86px;color:var(--muted);font-size:15px}
+.dbody h4{margin:10px 0 4px;color:var(--text);font-size:14px;font-weight:500}
+.dbody ul{margin:0;padding-left:18px}
+.blink{font:16px ui-monospace,Consolas,monospace;color:var(--cyan)}
+
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:22px 0 30px;text-align:center}
 
 @media(max-width:760px){
@@ -102,6 +123,8 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;paddin
   nav{order:3;flex-basis:100%}
   .hero h1{font-size:25px}.ver{font-size:38px}
   .code{grid-template-columns:1fr;gap:2px}
+  .dbody{padding-left:14px}
+  .item .head{flex-wrap:wrap;gap:8px}
 }
 </style>
 </head>
@@ -177,6 +200,9 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;paddin
       <p class="sub" data-t="dtc_sub"></p>
       <label for="q" data-t="dtc_label"></label>
       <input id="q" type="search" autocomplete="off" data-ph="dtc_ph">
+      <div class="chips" id="dtcChips"></div>
+      <div class="dbox"><b data-t="dtc_how_h"></b> <span data-t="dtc_how"></span></div>
+      <div class="dbox"><b data-t="dtc_stand_h"></b> <span data-t="dtc_stand"></span></div>
       <div class="dtc" id="dtcList" aria-live="polite"></div>
       <small class="hint" data-t="dtc_note"></small>
     </div>
@@ -212,53 +238,61 @@ const CONFIG = {
   }
 };
 
-/* รหัส DTC (OBD-II มาตรฐาน) เพิ่มแถวใหม่ได้: ["รหัส","คำอธิบายไทย","English"] */
+/* รหัส DTC มอเตอร์ไซค์ฮอนด้า (PGM-FI) เพิ่มแถวใหม่ได้:
+   ["รหัส","ชื่อไทย","English",{ g:กลุ่ม(s=เซ็นเซอร์ a=ตัวกระทำ y=ระบบ), v:ชื่อย่อ, m:แหล่งที่มา(man/var/forum), k:คำค้นเพิ่ม,
+     cause:[สาเหตุไทย], causeEn:[English], eff:"อาการไทย", effEn:"English", f:1 = เตือนแรง }] */
 const DTC = [
- ["P0100","วงจรเซ็นเซอร์ MAF ผิดปกติ","Mass air flow (MAF) circuit malfunction"],
- ["P0101","สัญญาณ MAF อยู่นอกช่วงที่ควรเป็น","MAF circuit range/performance"],
- ["P0102","สัญญาณ MAF ต่ำเกินไป","MAF circuit low input"],
- ["P0103","สัญญาณ MAF สูงเกินไป","MAF circuit high input"],
- ["P0105","วงจรเซ็นเซอร์ MAP / ความกดอากาศผิดปกติ","MAP / barometric pressure circuit malfunction"],
- ["P0106","สัญญาณ MAP อยู่นอกช่วงที่ควรเป็น","MAP circuit range/performance"],
- ["P0107","สัญญาณเซ็นเซอร์ MAP ต่ำเกินไป","MAP circuit low input"],
- ["P0108","สัญญาณเซ็นเซอร์ MAP สูงเกินไป","MAP circuit high input"],
- ["P0110","วงจรเซ็นเซอร์อุณหภูมิอากาศไอดี (IAT) ผิดปกติ","Intake air temperature (IAT) circuit malfunction"],
- ["P0112","สัญญาณ IAT ต่ำเกินไป","IAT circuit low input"],
- ["P0113","สัญญาณ IAT สูงเกินไป","IAT circuit high input"],
- ["P0115","วงจรเซ็นเซอร์อุณหภูมิน้ำหล่อเย็น (ECT) ผิดปกติ","Engine coolant temperature (ECT) circuit malfunction"],
- ["P0117","สัญญาณ ECT ต่ำเกินไป","ECT circuit low input"],
- ["P0118","สัญญาณ ECT สูงเกินไป","ECT circuit high input"],
- ["P0120","วงจรเซ็นเซอร์ตำแหน่งปีกผีเสื้อ (TPS) A ผิดปกติ","Throttle position sensor A circuit malfunction"],
- ["P0122","สัญญาณ TPS A ต่ำเกินไป","Throttle position sensor A circuit low input"],
- ["P0123","สัญญาณ TPS A สูงเกินไป","Throttle position sensor A circuit high input"],
- ["P0130","วงจรเซ็นเซอร์ออกซิเจน (แบงค์ 1 ตัวที่ 1) ผิดปกติ","O2 sensor circuit malfunction (bank 1, sensor 1)"],
- ["P0131","แรงดันเซ็นเซอร์ออกซิเจน (B1S1) ต่ำ","O2 sensor circuit low voltage (B1S1)"],
- ["P0132","แรงดันเซ็นเซอร์ออกซิเจน (B1S1) สูง","O2 sensor circuit high voltage (B1S1)"],
- ["P0133","เซ็นเซอร์ออกซิเจน (B1S1) ตอบสนองช้า","O2 sensor circuit slow response (B1S1)"],
- ["P0171","ส่วนผสมบางเกินไป (แบงค์ 1)","System too lean (bank 1)"],
- ["P0172","ส่วนผสมหนาเกินไป (แบงค์ 1)","System too rich (bank 1)"],
- ["P0174","ส่วนผสมบางเกินไป (แบงค์ 2)","System too lean (bank 2)"],
- ["P0175","ส่วนผสมหนาเกินไป (แบงค์ 2)","System too rich (bank 2)"],
- ["P0201","วงจรหัวฉีดสูบ 1 ผิดปกติ","Injector circuit malfunction, cylinder 1"],
- ["P0202","วงจรหัวฉีดสูบ 2 ผิดปกติ","Injector circuit malfunction, cylinder 2"],
- ["P0203","วงจรหัวฉีดสูบ 3 ผิดปกติ","Injector circuit malfunction, cylinder 3"],
- ["P0204","วงจรหัวฉีดสูบ 4 ผิดปกติ","Injector circuit malfunction, cylinder 4"],
- ["P0300","เครื่องสะดุด (misfire) หลายสูบ/สุ่มสูบ","Random/multiple cylinder misfire detected"],
- ["P0301","เครื่องสะดุดที่สูบ 1","Cylinder 1 misfire detected"],
- ["P0302","เครื่องสะดุดที่สูบ 2","Cylinder 2 misfire detected"],
- ["P0303","เครื่องสะดุดที่สูบ 3","Cylinder 3 misfire detected"],
- ["P0304","เครื่องสะดุดที่สูบ 4","Cylinder 4 misfire detected"],
- ["P0325","วงจรเซ็นเซอร์น็อก (knock sensor) ผิดปกติ","Knock sensor circuit malfunction"],
- ["P0335","วงจรเซ็นเซอร์ตำแหน่งเพลาข้อเหวี่ยง A ผิดปกติ","Crankshaft position sensor A circuit malfunction"],
- ["P0340","วงจรเซ็นเซอร์ตำแหน่งเพลาลูกเบี้ยว ผิดปกติ","Camshaft position sensor circuit malfunction"],
- ["P0420","ประสิทธิภาพตัวเร่งปฏิกิริยา (แคท) ต่ำกว่าเกณฑ์ (แบงค์ 1)","Catalyst system efficiency below threshold (bank 1)"],
- ["P0443","วงจรวาล์วควบคุม EVAP purge ผิดปกติ","EVAP purge control valve circuit malfunction"],
- ["P0500","เซ็นเซอร์ความเร็วรถ (VSS) ผิดปกติ","Vehicle speed sensor malfunction"],
- ["P0505","ระบบควบคุมรอบเดินเบาผิดปกติ","Idle control system malfunction"],
- ["P0562","แรงดันระบบไฟต่ำ","System voltage low"],
- ["P0563","แรงดันระบบไฟสูง","System voltage high"],
- ["P0600","การสื่อสารอนุกรมของ ECU ผิดปกติ","Serial communication link malfunction"],
- ["P0601","หน่วยความจำ ECU ผิดปกติ (checksum)","ECM/PCM memory checksum error"]
+ ["0","ไฟ MIL ไม่กะพริบ / เครื่องสตาร์ทไม่ติด","MIL does not blink / engine will not start",{g:"y",v:"ECM",m:"man",
+   cause:["ECM เสีย","ถ้าไฟค้างติดตลอด: สายขั้วตรวจสอบ (service check connector) ลัดวงจร"],
+   causeEn:["ECM faulty","If the light stays on constantly: service check connector wire is shorted"],
+   eff:"เครื่องยนต์สตาร์ทไม่ติด (กรณี ECM เสีย)",effEn:"Engine will not start (if the ECM is faulty)"}],
+ ["1","วงจรเซ็นเซอร์ MAP (แรงดันท่อไอดี) ผิดปกติ","MAP sensor (intake pressure) circuit malfunction",{g:"s",v:"MAP",m:"man",
+   cause:["ขั้วต่อเซ็นเซอร์หลวมหรือสัมผัสไม่ดี","สายเซ็นเซอร์ขาดหรือลัดวงจร","เซ็นเซอร์ MAP เสีย"],
+   causeEn:["Sensor connector loose or poor contact","Sensor wire open or shorted","MAP sensor faulty"],
+   eff:"รอบเดินเบาไม่เรียบ ECM ใช้ค่าสำรองแทน",effEn:"Rough idle. The ECM uses a fallback value."}],
+ ["2","เซ็นเซอร์ MAP ค่าผิดปกติ (performance)","MAP sensor reading abnormal (performance)",{g:"s",v:"MAP",m:"var",
+   cause:["ท่อหรือขั้วต่อเซ็นเซอร์ MAP หลวม","เซ็นเซอร์ MAP เสีย"],
+   causeEn:["MAP sensor hose or connector loose","MAP sensor faulty"],
+   eff:"บางรุ่นเครื่องทำงานได้ปกติ",effEn:"On some models the engine runs normally."}],
+ ["7","เซ็นเซอร์อุณหภูมิน้ำหล่อเย็น / เครื่อง (ECT) ผิดปกติ","Engine coolant temperature (ECT) sensor malfunction",{g:"s",v:"ECT",m:"man",
+   k:"หม้อน้ำ น้ำหล่อเย็น coolant radiator ความร้อน อุณหภูมิ",
+   cause:["ขั้วต่อหลวมหรือสัมผัสไม่ดี","สายขาดหรือลัดวงจร","เซ็นเซอร์ ECT เสีย"],
+   causeEn:["Connector loose or poor contact","Wire open or shorted","ECT sensor faulty"],
+   eff:"สตาร์ทยากตอนเครื่องเย็น ECM ใช้ค่าอุณหภูมิสำรอง",effEn:"Hard to start when cold. The ECM uses a fallback temperature."}],
+ ["8","เซ็นเซอร์ตำแหน่งปีกผีเสื้อ (TP) ผิดปกติ","Throttle position (TP) sensor malfunction",{g:"s",v:"TP",m:"man",
+   cause:["ขั้วต่อหลวมหรือสัมผัสไม่ดี","สายขาดหรือลัดวงจร","เซ็นเซอร์ TP เสีย"],
+   causeEn:["Connector loose or poor contact","Wire open or shorted","TP sensor faulty"],
+   eff:"เร่งแล้วตอบสนองช้า ECM ใช้ค่าสำรอง (ปีกผีเสื้อ 0°)",effEn:"Slow throttle response. The ECM uses a fallback value (throttle at 0°)."}],
+ ["9","เซ็นเซอร์อุณหภูมิอากาศไอดี (IAT) ผิดปกติ","Intake air temperature (IAT) sensor malfunction",{g:"s",v:"IAT",m:"man",
+   cause:["สายขาดหรือลัดวงจร","เซ็นเซอร์ IAT เสีย"],
+   causeEn:["Wire open or shorted","IAT sensor faulty"],
+   eff:"เครื่องทำงานได้ปกติ",effEn:"Engine runs normally."}],
+ ["11","เซ็นเซอร์ความเร็วรถ (VS) ผิดปกติ","Vehicle speed (VS) sensor malfunction",{g:"s",v:"VS",m:"man",
+   k:"ความเร็ว speed speedometer เรือนไมล์ ISS ไอดอลสต็อป",
+   cause:["ขั้วต่อเซ็นเซอร์ VS หลวมหรือสัมผัสไม่ดี","สายไฟเซ็นเซอร์ขาด (ไฟเลี้ยง สายสัญญาณ หรือสายกราวด์)","เซ็นเซอร์ VS เสีย","ECM เสีย (พบน้อย)"],
+   causeEn:["VS sensor connector loose or poor contact","Sensor wire open (power, signal or ground)","VS sensor faulty","ECM faulty (rare)"],
+   eff:"เข็มความเร็วไม่ขึ้นหรือค้าง ถ้ารุ่นมีระบบหยุดเครื่องอัตโนมัติ (ISS) ระบบนี้อาจทำงานผิดปกติด้วย (ข้อมูลจากเว็บ oto.detik.com ไม่ใช่จากคู่มือโดยตรง)",
+   effEn:"Speedometer does not rise or sticks. On models with idle stop (ISS) that system may also misbehave (from oto.detik.com, not directly from a manual)."}],
+ ["12","หัวฉีดผิดปกติ","Injector malfunction",{g:"a",v:"INJ",m:"man",f:1,
+   cause:["ขั้วต่อหัวฉีดหลวมหรือสัมผัสไม่ดี","สายหัวฉีดขาดหรือลัดวงจร","หัวฉีดเสีย"],
+   causeEn:["Injector connector loose or poor contact","Injector wire open or shorted","Injector faulty"],
+   eff:"บางรุ่นระบบตัดการทำงานของเครื่องเพื่อป้องกันความเสียหาย",effEn:"On some models the system cuts the engine to prevent damage."}],
+ ["21","เซ็นเซอร์ออกซิเจน (O2) ผิดปกติ","Oxygen (O2) sensor malfunction",{g:"s",v:"O2",m:"man",
+   cause:["ขั้วต่อเซ็นเซอร์ O2 หลวมหรือสัมผัสไม่ดี","สายขาดหรือลัดวงจร","เซ็นเซอร์ O2 เสีย"],
+   causeEn:["O2 sensor connector loose or poor contact","Wire open or shorted","O2 sensor faulty"],
+   eff:"ส่วนผสมน้ำมันไม่ถูกปรับอัตโนมัติ อาจกินน้ำมันขึ้น",effEn:"Air-fuel mixture is not corrected automatically. Fuel use may rise."}],
+ ["29","วาล์วอากาศรอบเดินเบา (IACV) ผิดปกติ","Idle air control valve (IACV) malfunction",{g:"a",v:"IACV",m:"forum",
+   cause:["ขั้วต่อหรือสายวาล์ว IACV","วาล์ว IACV เสีย"],
+   causeEn:["IACV connector or wiring","IACV faulty"],
+   eff:"รอบเดินเบาไม่นิ่ง",effEn:"Unstable idle speed."}],
+ ["33","ECM / ความจำ (EEPROM) ผิดปกติ","ECM / memory (EEPROM) malfunction",{g:"y",v:"ECM",m:"forum",
+   cause:["ECM เสีย"],causeEn:["ECM faulty"],
+   eff:"ตรวจกับศูนย์หรือช่างที่มีเครื่องมืออ่าน",effEn:"Have it checked at a dealer or a workshop with a scan tool."}],
+ ["54","เซ็นเซอร์มุมเอียง (Bank angle) ผิดปกติ","Bank angle sensor malfunction",{g:"s",v:"BANK",m:"forum",f:1,
+   k:"มุมเอียง bank angle เอียง ล้ม",
+   cause:["ขั้วต่อหรือสายเซ็นเซอร์มุมเอียง","เซ็นเซอร์เสีย","ติดตั้งเซ็นเซอร์เอียงผิดทิศ"],
+   causeEn:["Bank angle sensor connector or wiring","Sensor faulty","Sensor installed in the wrong direction"],
+   eff:"อาจสตาร์ทไม่ติด หรือเครื่องดับ (ระบบตัดเมื่อล้ม)",effEn:"May not start, or the engine may cut out (tip-over protection)."}]
 ];
 
 /* ================= ข้อความสองภาษา ================= */
@@ -271,7 +305,7 @@ const T = {
   latest:"เวอร์ชันล่าสุด",
   tile_fw:"โหลดเฟิร์มแวร์ล่าสุดและดูขั้นตอนอัปเดตเกจ",
   tile_report:"บอกเราว่าเกจมีปัญหาอะไร ระบบแนบรหัสเครื่องให้อัตโนมัติ",
-  tile_dtc:"พิมพ์รหัส (เช่น P0107) หรือคำค้น",
+  tile_dtc:"พิมพ์รหัส (เช่น 8) หรือคำค้น",
   fw_sub:"ตรวจเวอร์ชันของเกจคุณและดาวน์โหลดไฟล์อัปเดต",
   dev_id:"รหัสเครื่อง",cur_ver:"เวอร์ชันในเครื่อง",new_ver:"เวอร์ชันล่าสุด",
   st_none:"เปิดจากปุ่ม UPDATE ในเกจเพื่อดูเวอร์ชันของคุณ",
@@ -288,10 +322,17 @@ const T = {
   rep_label:"เกิดอะไรขึ้น",rep_ph:"เช่น หน้าจอดับตอนต่อ ECU",
   send_mail:"ส่งทางอีเมล",send_gh:"ส่งทาง GitHub",
   rep_hint:"ระบบแนบรหัสเครื่องและเวอร์ชันไปให้อัตโนมัติ · การส่งทาง GitHub ต้องมีบัญชี GitHub",
-  dtc_sub:"ค้นหาความหมายของรหัสความผิดปกติที่เกจแสดง",
-  dtc_label:"รหัสหรือคำค้น",dtc_ph:"เช่น P0107 หรือ misfire หรือ สะดุด",
+  dtc_sub:"รหัสไฟ MIL กะพริบของระบบ PGM-FI (หัวฉีด) มอเตอร์ไซค์ฮอนด้า",
+  dtc_label:"รหัสหรือคำค้น",dtc_ph:"เช่น 8 หรือ TP หรือ หัวฉีด หรือ มุมเอียง",
   dtc_none:"ไม่พบรหัสที่ตรงกับคำค้น",
-  dtc_note:"เป็นรหัส OBD-II มาตรฐานทั่วไป ความหมายอาจต่างกันเล็กน้อยตามผู้ผลิตรถ ควรตรวจกับศูนย์หรือช่างเมื่อไม่แน่ใจ",
+  dtc_how_h:"วิธีอ่านรหัสจากไฟ MIL:",
+  dtc_how:"กะพริบยาว 1 ครั้ง = 10, กะพริบสั้น 1 ครั้ง = 1 เช่น ยาว 2 ครั้ง + สั้น 1 ครั้ง = รหัส 21 (เซ็นเซอร์ O2) ถ้ามีหลายรหัส ไฟจะกะพริบเรียงจากเลขน้อยไปมาก ไฟ MIL บอกได้เฉพาะรหัสหลัก ส่วนรหัสย่อย (เช่น 1-2) ต้องอ่านด้วยเครื่อง HDS",
+  dtc_stand_h:"ขาตั้งข้าง (สกู๊ตเตอร์/รถออโต้):",
+  dtc_stand:"ในคู่มือ NSS250 และ NC700 ไฟ MIL จะกะพริบรหัสที่พบตอนนี้เมื่อกางขาตั้งข้าง และจะติดค้างเมื่อเก็บขาตั้งหรือรอบเครื่องเกิน 2,000 รอบ/นาที ยังไม่พบรหัสกะพริบเฉพาะของสวิตช์ขาตั้งในคู่มือที่อ้างอิง จึงยังไม่ใส่เป็นรหัส เพื่อไม่ให้เดา",
+  dtc_note:"รหัส 1, 7, 8, 9, 11, 12, 21 ตรงกับตารางในคู่มือซ่อมฮอนด้าหลายรุ่น (CRF250R/L, NC700X, เครื่อง PGM-FI ขนาดเล็ก) รหัส 2 ความหมายต่างกันตามรุ่น ส่วนรหัส 29, 33, 54 ได้จากผู้ใช้ PCX/Forza ในฟอรั่ม ยังไม่ได้เทียบกับคู่มือโดยตรง รุ่นอย่าง Wave 125i, Click, Scoopy i, MSX ใช้ PGM-FI ตระกูลเดียวกัน แต่ควรเปิดคู่มือรุ่นนั้นยืนยันอีกครั้งก่อนเปลี่ยนอะไหล่",
+  g_all:"ทั้งหมด",g_s:"เซ็นเซอร์",g_a:"ตัวกระทำ",g_y:"ระบบ",
+  d_blink:"กะพริบ",d_cause:"สาเหตุที่เป็นไปได้",d_eff:"อาการ / ระบบสำรอง",d_long:"ยาว",d_short:"สั้น",d_off:"ไม่กะพริบ",
+  src_man:"คู่มือ",src_var:"คู่มือ (ต่างตามรุ่น)",src_forum:"ฟอรั่ม PCX/Forza",
   how_sub:"ขั้นตอนอัปเดตเฟิร์มแวร์เกจ KTEC",
   h1:"กดปุ่ม UPDATE ในเกจ จะแสดงลิงก์หรือ QR code ของหน้านี้พร้อมรหัสเครื่องและเวอร์ชัน",
   h2:"สแกนด้วยมือถือ แล้วดูว่าเฟิร์มแวร์เป็นเวอร์ชันล่าสุดหรือไม่",
@@ -310,7 +351,7 @@ const T = {
   latest:"Latest version",
   tile_fw:"Download the latest firmware and see how to update your gauge",
   tile_report:"Tell us what went wrong. Device ID is attached automatically.",
-  tile_dtc:"Type a code (e.g. P0107) or a keyword",
+  tile_dtc:"Type a code (e.g. 8) or a keyword",
   fw_sub:"Check your gauge's version and download the update file",
   dev_id:"Device ID",cur_ver:"Installed version",new_ver:"Latest version",
   st_none:"Open this page from the UPDATE button on your gauge to see your version",
@@ -327,10 +368,17 @@ const T = {
   rep_label:"What happened",rep_ph:"e.g. Screen goes black when connected to ECU",
   send_mail:"Send by email",send_gh:"Send via GitHub",
   rep_hint:"Device ID and version are attached automatically · Sending via GitHub requires a GitHub account",
-  dtc_sub:"Look up the meaning of a fault code shown on your gauge",
-  dtc_label:"Code or keyword",dtc_ph:"e.g. P0107 or misfire",
+  dtc_sub:"Blinking MIL codes of the PGM-FI (fuel injection) system on Honda motorcycles",
+  dtc_label:"Code or keyword",dtc_ph:"e.g. 8, TP, injector or bank angle",
   dtc_none:"No matching code found",
-  dtc_note:"Generic OBD-II codes. Meanings can vary slightly by vehicle maker. When in doubt, check with a workshop.",
+  dtc_how_h:"How to read MIL codes:",
+  dtc_how:"One long blink = 10 and one short blink = 1. For example 2 long + 1 short = code 21 (O2 sensor). If there are several codes, the light blinks them from lowest to highest. The MIL only shows the main code; sub-codes (such as 1-2) need an HDS scan tool.",
+  dtc_stand_h:"Side stand (scooters / automatics):",
+  dtc_stand:"In the NSS250 and NC700 manuals the MIL blinks the current code while the side stand is down, and stays on once the stand is raised or engine speed goes above 2,000 rpm. No blink code specific to the side stand switch was found in the manuals referenced, so none is listed rather than guessing.",
+  dtc_note:"Codes 1, 7, 8, 9, 11, 12 and 21 match the tables in several Honda service manuals (CRF250R/L, NC700X, small PGM-FI engines). Code 2 differs by model. Codes 29, 33 and 54 come from PCX/Forza forum users and have not been checked against a manual. Wave 125i, Click, Scoopy i and MSX use the same PGM-FI family, but check that model's manual before replacing parts.",
+  g_all:"All",g_s:"Sensors",g_a:"Actuators",g_y:"System",
+  d_blink:"Blink pattern",d_cause:"Possible causes",d_eff:"Symptoms / fallback",d_long:"long",d_short:"short",d_off:"No blink",
+  src_man:"Manual",src_var:"Manual (varies by model)",src_forum:"Forum (PCX/Forza)",
   how_sub:"How to update your KTEC gauge firmware",
   h1:"Press UPDATE on the gauge. It shows a link or QR code to this page with your device ID and version.",
   h2:"Scan it with your phone and check whether the firmware is up to date.",
@@ -384,17 +432,61 @@ function renderStatus() {
   el.textContent = t(key); el.className = cls;
 }
 
+const GROUPS = [["all","g_all"],["s","g_s"],["a","g_a"],["y","g_y"]];
+let dtcGroup = "all";
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+const codeNum = c => /^\d+$/.test(c) ? parseInt(c, 10) : Infinity;
+
+function blinkTxt(c) {
+  const n = parseInt(c, 10);
+  if (isNaN(n)) return "";
+  if (n === 0) return t("d_off");
+  const l = Math.floor(n / 10), s = n % 10;
+  return (l ? "▬ ".repeat(l) : "") + (s ? "● ".repeat(s) : "") + " (" + (l ? t("d_long") + " " + l + " " : "") + (s ? t("d_short") + " " + s : "") + ")";
+}
+
 function renderDtc() {
-  const box = $("#dtcList"), q = $("#q").value.trim().toLowerCase();
-  const i = lang === "th" ? 1 : 2;
-  const hit = DTC.filter(r => !q || r[0].toLowerCase().includes(q) || r[1].toLowerCase().includes(q) || r[2].toLowerCase().includes(q));
-  box.textContent = "";
-  if (!hit.length) { const d = document.createElement("div"); d.className = "empty"; d.textContent = t("dtc_none"); box.appendChild(d); return; }
-  hit.slice(0, 60).forEach(r => {
-    const row = document.createElement("div"); row.className = "code";
-    const b = document.createElement("b"); b.textContent = r[0];
-    const s = document.createElement("span"); s.textContent = r[i];
-    row.append(b, s); box.appendChild(row);
+  const th = lang === "th";
+  const q = $("#q").value.trim().toLowerCase();
+
+  const chips = $("#dtcChips"); chips.textContent = "";
+  GROUPS.forEach(([k, key]) => {
+    const b = el("button", "chip" + (k === dtcGroup ? " on" : ""), t(key));
+    b.type = "button"; b.dataset.g = k; chips.appendChild(b);
+  });
+
+  const rows = DTC.filter(r => {
+    const x = r[3] || {};
+    if (dtcGroup !== "all" && x.g !== dtcGroup) return false;
+    if (!q) return true;
+    return [r[0], r[1], r[2], x.v, x.k, (x.cause || []).join(" "), (x.causeEn || []).join(" ")].join(" ").toLowerCase().includes(q);
+  }).sort((a, b) => { const d = codeNum(a[0]) - codeNum(b[0]); return d && !isNaN(d) ? d : String(a[0]).localeCompare(String(b[0])); });
+
+  const box = $("#dtcList"); box.textContent = "";
+  if (!rows.length) { box.appendChild(el("div", "empty", t("dtc_none"))); return; }
+
+  rows.forEach(r => {
+    const x = r[3] || {};
+    const cause = th ? x.cause : (x.causeEn || x.cause);
+    const eff = th ? x.eff : (x.effEn || x.eff);
+    const hasBody = !!(cause && cause.length) || !!eff;
+    const item = el(hasBody ? "details" : "div", "item");
+    const head = el(hasBody ? "summary" : "div", "head");
+    head.append(el("span", "dcode", r[0]), el("span", "dt", th ? r[1] : (r[2] || r[1])));
+    if (x.m) head.appendChild(el("span", "tag" + (x.f ? " f" : ""), t("src_" + x.m)));
+    item.appendChild(head);
+    if (hasBody) {
+      const body = el("div", "dbody");
+      const bl = blinkTxt(r[0]);
+      if (bl) { body.appendChild(el("h4", "", t("d_blink"))); body.appendChild(el("div", "blink", bl)); }
+      if (cause && cause.length) {
+        body.appendChild(el("h4", "", t("d_cause")));
+        const ul = el("ul"); cause.forEach(c => ul.appendChild(el("li", "", c))); body.appendChild(ul);
+      }
+      if (eff) { body.appendChild(el("h4", "", t("d_eff"))); body.appendChild(el("div", "", eff)); }
+      item.appendChild(body);
+    }
+    box.appendChild(item);
   });
 }
 
@@ -422,6 +514,7 @@ $("#curVer").textContent = curFw;
 $("#newVer").textContent = CONFIG.latest;
 $("#dl").href = CONFIG.file;
 $("#q").addEventListener("input", renderDtc);
+$("#dtcChips").addEventListener("click", e => { const g = e.target.dataset && e.target.dataset.g; if (!g) return; dtcGroup = g; renderDtc(); });
 
 /* ---- แจ้งปัญหา ---- */
 const info = () => "\n\n" + t("mail_info_id") + ": " + devId + "\n" + t("mail_info_fw") + ": " + curFw;
