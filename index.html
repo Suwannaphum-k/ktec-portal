@@ -425,8 +425,8 @@ $("#devId").textContent = devId;
 $("#curVer").textContent = curFw;
 showLatest();
 /* อ่านเวอร์ชันล่าสุดจาก firmware/version.json  แก้เลขที่ไฟล์นั้นที่เดียวพอ (ถ้าโหลดไม่ได้ใช้ค่า CONFIG.latest) */
-fetch("firmware/version.json?t=" + Date.now(), { cache: "no-store" })
-  .then(r => r.ok ? r.json() : null)
+const vget = u => fetch(u + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).catch(() => null);
+vget("version.json").then(j => j || vget("firmware/version.json"))
   .then(j => { if (j && j.latest) { CONFIG.latest = String(j.latest); showLatest(); } })
   .catch(() => {});
 $("#dl").href = CONFIG.file;
